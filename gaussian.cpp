@@ -14,7 +14,7 @@ int main(int argc, char const *argv[])
     int i, j, k, numRC;
 
     //read number of rows and columns
-    numRC = 3;
+    numRC = 5;
 
     srand(time(NULL));
 
@@ -27,12 +27,32 @@ int main(int argc, char const *argv[])
     matrix[0][0] = 1;
     matrix[0][1] = 3;
     matrix[0][2] = 2;
+    matrix[0][3] = 2;
+    matrix[0][4] = 2;
+
     matrix[1][0] = 9;
     matrix[1][1] = 15;
     matrix[1][2] = 5;
+    matrix[1][3] = 5;
+    matrix[1][4] = 5;
+
     matrix[2][0] = 2;
     matrix[2][1] = 0;
     matrix[2][2] = 8;
+    matrix[2][3] = 8;
+    matrix[2][4] = 8;
+
+    matrix[3][0] = 2;
+    matrix[3][1] = 1;
+    matrix[3][2] = 9;
+    matrix[3][3] = 8;
+    matrix[3][4] = 7;
+
+    matrix[4][0] = 7;
+    matrix[4][1] = 0;
+    matrix[4][2] = 8;
+    matrix[4][3] = 56;
+    matrix[4][4] = 9;
 
     /*
     float matrix[numRC][numRC] = {{1, 3, 2},
@@ -50,7 +70,7 @@ int main(int argc, char const *argv[])
         }
     }
     */
-    int init[3] = {76, 40, 91};
+    int init[5] = {76, 40, 91, 67, 987};
 
     for (i = 0; i < numRC; i++)
     {
