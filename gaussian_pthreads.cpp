@@ -72,8 +72,6 @@ int main(int argc, char const *argv[])
     printInfos(numRC, matrix, vector);
 
     pthread_mutex_init(&mutex, NULL);
-    pthread_mutex_lock(&mutex);
-    pthread_mutex_unlock(&mutex);
 
     //realiza o escalonamento reduzido da matriz; é a fase de eliminação
     forwardElimination(numRC, matrix, vector);
@@ -104,54 +102,78 @@ void forwardElimination(int numRC, float **matrix, float *vector)
     for (int i = 0; i < numRC; i++)
         dataM[i] = new Data[numRC];
 
+    int numRT;
+    int numCT;
+    int numRCT;
+    int countI = 0;
+
     //NÃO-PARALELIZAVEL
     for (int k = 0; k < numRC - 1; k++)
     {
-        pthread_t rowsThreads[numRC];
-        pthread_t columnsThreads[numRC];
+        numRT = 0;
+        numCT = 0;
+        numRCT = 0;
 
-        for (int i = 0; i < numRC - 1; i++)
+        countI = k + 1;
+        for (int i = k + 1; i < numRC; i++)
         {
-            dataV[i].i = i + 1;
-            dataV[i].k = k;
-            dataV[i].matrix = matrix;
-            dataV[i].vector = vector;
-            dataV[i].numRC = numRC;
-        }
-
-        int countI = 1;
-        for (int i = k+1; i < numRC; i++)
-        {
-            for (int j = k; j < numRC; j++)
+            if (matrix[i][k] == 0)
             {
-                dataM[i][j].i = countI;
-                dataM[i][j].j = k;
-                dataM[i][j].k = k;
-                dataM[i][j].matrix = matrix;
-                dataM[i][j].vector = vector;
-                dataM[i][j].numRC = numRC;
+                continue;
             }
+            dataV[numRT].i = countI;
+            dataV[numRT].k = k;
+            dataV[numRT].matrix = matrix;
+            dataV[numRT].vector = vector;
+            dataV[numRT].numRC = numRC;
+            dataV[numRT].multiplyFactor = matrix[k][k] / matrix[i][k];
+            numRT++;
             countI++;
         }
 
+        countI = k + 1;
         for (int i = k + 1; i < numRC; i++)
         {
-            pthread_create(&(rowsThreads[i]), NULL, normalize, (void *)&dataV[i - 1]);
+            if (matrix[i][k] == 0)
+            {
+                countI++;
+                continue;
+            }
+            for (int j = k; j < numRC; j++)
+            {
+                dataM[numCT][j].i = countI;
+                dataM[numCT][j].j = j;
+                dataM[numCT][j].k = k;
+                dataM[numCT][j].matrix = matrix;
+                dataM[numCT][j].vector = vector;
+                dataM[numCT][j].numRC = numRC;
+                dataM[numCT][j].multiplyFactor = matrix[k][k] / matrix[i][k];
+            }
+            countI++;
+            numCT++;
+        }
+
+        pthread_t rowsThreads[numRT];
+        pthread_t columnsThreads[numCT];
+
+        for (int i = 0; i < numRT; i++)
+        {
+            pthread_create(&(rowsThreads[i]), NULL, normalize, (void *)&dataV[i]);
             std::cout << "Created row thread " << i << std::endl;
         }
 
-        for (int i = k + 1; i < numRC; i++)
+        for (int i = 0; i < numRT; i++)
         {
-            pthread_join(rowsThreads[i - 1], NULL);
+            pthread_join(rowsThreads[i], NULL);
             std::cout << "Synchronizing row thread " << i << "\n\n";
         }
 
-        for (int i = k + 1; i < numRC; i++)
+        for (int i = 0; i < numCT; i++)
         {
             for (int j = k; j < numRC; j++)
             {
                 pthread_create(&(columnsThreads[j]), NULL, normalizeMatrix, (void *)&dataM[i][j]);
-                std::cout << "Created column thread " << j << std::endl;
+                std::cout << "Created column thread " << i << " " << j << std::endl;
             }
 
             for (int j = k; j < numRC; j++)
@@ -170,15 +192,14 @@ void *normalize(void *dataFormal)
     int j = data->j;
     int k = data->k;
 
-    std::cout << data->matrix[i][k] << std::endl;
-
-    if (data->matrix[i][k] == 0)
-        pthread_exit(NULL);
+    float prev;
 
     pthread_mutex_lock(&mutex);
+    std::cout << data->matrix[i][k] << std::endl;
 
-    data->multiplyFactor = data->matrix[k][k] / data->matrix[i][k];
+    prev = data->vector[i];
     data->vector[i] = data->vector[k] - data->multiplyFactor * data->vector[i];
+    printf("%.2f = %.2f - %.2f * %.2f\n", data->vector[i], data->vector[k], data->multiplyFactor, prev);
 
     std::cout << data->vector[i] << std::endl;
     pthread_mutex_unlock(&mutex);
@@ -192,12 +213,16 @@ void *normalizeMatrix(void *dataFormal)
     int j = data->j;
     int k = data->k;
 
-    if (data->matrix[i][k] == 0)
-        pthread_exit(NULL);
+    float prev;
 
     pthread_mutex_lock(&mutex);
-    data->multiplyFactor = data->matrix[k][k] / data->matrix[i][k];
+
+    printf("B4 ops\n %d\n %d\n %d\n", i, j, k);
+    printInfos(data->numRC, data->matrix, data->vector);
+
     data->matrix[i][j] = data->matrix[k][j] - data->multiplyFactor * data->matrix[i][j];
+
+    printf("%.2f = %.2f - %.2f * %.2f\n", data->matrix[i][j], data->matrix[k][j], data->multiplyFactor, prev);
 
     printInfos(data->numRC, data->matrix, data->vector);
     pthread_mutex_unlock(&mutex);
@@ -240,7 +265,6 @@ void printResults(int numRC, float **matrix, float *vector, float *solutions)
 
 void printInfos(int numRC, float **matrix, float *vector)
 {
-
     for (int i = 0; i < numRC; i++)
     {
         for (int j = 0; j < numRC; j++)
