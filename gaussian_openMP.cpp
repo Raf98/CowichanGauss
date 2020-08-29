@@ -14,10 +14,6 @@ int main(int argc, char const *argv[])
 {
     int i, j, k, numRC;
 
-    numRC = 5;
-
-    srand(time(NULL));
-
     float **matrix = new float *[numRC];
     for (int i = 0; i < numRC; i++)
         matrix[i] = new float[numRC];
@@ -54,23 +50,9 @@ int main(int argc, char const *argv[])
     matrix[4][3] = 56;
     matrix[4][4] = 9;
 
-    /*
-    float matrix[numRC][numRC] = {{1, 3, 2},
-                                  {9, 15, 5},
-                                  {2, 0, 8}};
-    */
+    numRC = 5;
 
-    /* 		
-    //matriz deve ser diagonal dominante e simetrica
-    for (i = 0; i < numCols; i++)
-    {
-        for (j = 0; j < numCols; j++)
-        {
-            matrix[i][j] = rand % 128;
-        }
-    }
-    */
-    int init[5] = {76, 40, 91, 67, 987};
+    int init[numRC] = {76, 40, 91, 67, 987};
 
     for (i = 0; i < numRC; i++)
     {
