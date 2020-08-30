@@ -1,7 +1,7 @@
 #include <iostream>
 #include <stdio.h>
 #include <stdlib.h>
-#include <time.h>
+#include <chrono>
 #include <iomanip>
 #include <fstream>
 #include <list>
@@ -26,8 +26,9 @@ int main(int argc, char const *argv[])
     int i, j, k, numRC;
 
     std::fstream file;
+    std::string fileName = argv[1];
 
-    file.open(argv[1], std::fstream::in | std::fstream::out | std::fstream::app);
+    file.open(fileName, std::fstream::in | std::fstream::out | std::fstream::app);
 
     std::string line;
 
@@ -43,14 +44,19 @@ int main(int argc, char const *argv[])
     utils::readInputFile(file, numRC, vector, matrix);
     utils::printInfos(numRC, matrix, vector, "\t\t****************INITIAL MATRIX*********************");
 
-    //realiza o escalonamento reduzido da matriz; é a fase de eliminação
-    forwardElimination(numRC, matrix, vector);
-    utils::printInfos(numRC, matrix, vector, "\t****************FORWARD ELIMINATION MATRIX*********************");
+    auto start = std::chrono::high_resolution_clock::now();
 
+    forwardElimination(numRC, matrix, vector);
     double *solutions = backwardSubstitution(numRC, matrix, vector);
+
+    auto end = std::chrono::high_resolution_clock::now();
+    auto execTime = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start);
+
     utils::printResults(numRC, matrix, vector, solutions);
 
-    // desalocar memoria usando o operador delete[]
+    std::cout << "Execution Time: " << execTime.count() << std::endl;
+    utils::writeOutputFile(file, execTime,fileName,"OpenMP", numRC, vector, matrix, solutions);
+
     for (int i = 0; i < numRC; i++)
         delete[] matrix[i];
 
@@ -83,13 +89,13 @@ void forwardElimination(int numRC, double **matrix, double *vector)
             if (matrix[i][k] != 0)
             {
                 //#pragma omp critical
-                multiplyFactor = matrix[k][k] / matrix[i][k];
-                vector[i] = vector[k] - multiplyFactor * vector[i];
+                multiplyFactor = matrix[i][k] / matrix[k][k];
+                vector[i] -= multiplyFactor * vector[k];
 
-#pragma omp parallel for shared(matrix) private(j) num_threads(numThreads)
+#pragma omp parallel for shared(matrix) private(j) schedule(static, 1) //num_threads(numThreads)
                 for (j = k; j < numRC; j++)
                 {
-                    matrix[i][j] = matrix[k][j] - multiplyFactor * matrix[i][j];
+                    matrix[i][j] -= multiplyFactor * matrix[k][j];
                 }
             }
         }

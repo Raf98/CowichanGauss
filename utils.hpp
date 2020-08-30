@@ -2,6 +2,7 @@
 #include <string>
 #include <iostream>
 #include <fstream>
+#include <chrono>
 
 namespace utils
 {
@@ -117,14 +118,34 @@ namespace utils
             vector[i] = std::atof(line.c_str());
             std::cout << vector[i] << "\t";
         }
-        std::cout <<  std::endl;
+        std::cout << std::endl;
 
         file.close();
     }
 
-    void writeOutputFile(std::fstream &file, int numRC, double *vector, double **matrix)
+    void writeOutputFile(std::fstream &file, std::chrono::_V2::high_resolution_clock::duration execTime,
+                         std::string inputFileName, std::string trialType, int numRC, double *vector,
+                         double **matrix, double *solutions)
     {
-        file.open("output", std::fstream::in | std::fstream::out | std::fstream::app);
+        std::string outputFileName = "output_" + trialType + "_" + std::to_string(numRC) + "_" + inputFileName;
+
+        file.open(outputFileName, std::fstream::in | std::fstream::out | std::fstream::app);
+
+        file << "Execution time: " << execTime.count() << " ns"
+             << "\n\n";
+
+        for (int i = 0; i < numRC; i++)
+        {
+            for (int j = 0; j < numRC; j++)
+            {
+                file << matrix[i][j] << " ";
+            }
+
+            file << " | " << vector[i];
+            file << " -> " << solutions[i] << "\n\n";
+        }
+
+        file << "\n\n\n";
 
         file.close();
     }

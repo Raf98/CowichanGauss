@@ -1,8 +1,8 @@
 #include <iostream>
 #include <stdio.h>
 #include <stdlib.h>
-#include <time.h>
 #include <iomanip>
+#include <chrono>
 #include "utils.hpp"
 
 void forwardElimination(int numRC, double **matrix, double *vector);
@@ -20,8 +20,9 @@ int main(int argc, char const *argv[])
     int i, j, k, numRC;
 
     std::fstream file;
+    std::string fileName = argv[1];
 
-    file.open(argv[1], std::fstream::in | std::fstream::out | std::fstream::app);
+    file.open(fileName, std::fstream::in | std::fstream::out | std::fstream::app);
 
     std::string line;
 
@@ -37,12 +38,20 @@ int main(int argc, char const *argv[])
     utils::readInputFile(file, numRC, vector, matrix);
     utils::printInfos(numRC, matrix, vector, "\t\t****************INITIAL MATRIX*********************");
 
+    auto start = std::chrono::high_resolution_clock::now();
+
     //realiza o escalonamento reduzido da matriz; é a fase de eliminação
     forwardElimination(numRC, matrix, vector);
-    utils::printInfos(numRC, matrix, vector, "\t****************FORWARD ELIMINATION MATRIX*********************");
-
+    //utils::printInfos(numRC, matrix, vector, "\t****************FORWARD ELIMINATION MATRIX*********************");
     double *solutions = backwardSubstitution(numRC, matrix, vector);
+
+    auto end = std::chrono::high_resolution_clock::now();
+    auto execTime = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start);
+
     utils::printResults(numRC, matrix, vector, solutions);
+
+    std::cout << "Execution Time: " << execTime.count() << std::endl;
+    utils::writeOutputFile(file, execTime, fileName, "Seq", numRC, vector, matrix, solutions);
 
     // desalocar memoria usando o operador delete[]
     for (int i = 0; i < numRC; i++)
@@ -59,7 +68,7 @@ void forwardElimination(int numRC, double **matrix, double *vector)
 {
     double multiplyFactor = 0;
 
-    for (int k = 0; k < numRC-1; k++)
+    for (int k = 0; k < numRC - 1; k++)
     {
         //itera sobre as linhas da matriz restantes a serem normalizadas, para formar a diagonal de 0s
         for (int i = k + 1; i < numRC; i++)
@@ -67,21 +76,23 @@ void forwardElimination(int numRC, double **matrix, double *vector)
             if (matrix[i][k] == 0) //se a coluna for zero, a pula
                 continue;
 
+                //a[1][0] = a[1][0] - (a[1][0]/a[0][0])*(a[0][0])
+
             //encontra o fator de multiplicação a ser utilizado de forma a zerar os valores das colunas
             //que estejam na linha i ou abaixo. Usa o índice k pois esse é o indice da coluna e da linha
             //anteriores que serão usados para realizar as operações de subtração e multiplicação necesarias
             //para formar a diagonal inferior de 0s
-            multiplyFactor = matrix[k][k] / matrix[i][k];
+            multiplyFactor = matrix[i][k] / matrix[k][k];
 
             //normaliza todas as colunas de indice i para 0 e realiza o mesmo calculo para as demais
             //colunas, não necessariamente as anulando
             for (int j = k; j < numRC; j++)
             {
-                matrix[i][j] = matrix[k][j] - multiplyFactor * matrix[i][j];
+                matrix[i][j] = matrix[i][j] - multiplyFactor * matrix[k][j];
             }
 
             //realiza a mesma operação para o vetor de resultados
-            vector[i] = vector[k] - multiplyFactor * vector[i];
+            vector[i] = vector[i] - multiplyFactor * vector[k];
         }
     }
 }

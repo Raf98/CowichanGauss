@@ -1,7 +1,7 @@
 #include <iostream>
 #include <stdio.h>
 #include <stdlib.h>
-#include <time.h>
+#include <chrono>
 #include <iomanip>
 #include <pthread.h>
 #include "utils.hpp"
@@ -42,8 +42,9 @@ int main(int argc, char const *argv[])
     int i, j, k, numRC;
 
     std::fstream file;
+    std::string fileName = argv[1];
 
-    file.open(argv[1], std::fstream::in | std::fstream::out | std::fstream::app);
+    file.open(fileName, std::fstream::in | std::fstream::out | std::fstream::app);
 
     std::string line;
 
@@ -61,12 +62,20 @@ int main(int argc, char const *argv[])
 
     pthread_mutex_init(&mutex, NULL);
 
+    auto start = std::chrono::high_resolution_clock::now();
+
     //realiza o escalonamento reduzido da matriz; é a fase de eliminação
     forwardElimination(numRC, matrix, vector);
-    utils::printInfos(numRC, matrix, vector, "\t****************FORWARD ELIMINATION MATRIX*********************");
-
+    //utils::printInfos(numRC, matrix, vector, "\t****************FORWARD ELIMINATION MATRIX*********************");
     double *solutions = backwardSubstitution(numRC, matrix, vector);
+
+    auto end = std::chrono::high_resolution_clock::now();
+    auto execTime = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start);
+
     utils::printResults(numRC, matrix, vector, solutions);
+
+    std::cout << "Execution Time: " << execTime.count() << std::endl;
+    utils::writeOutputFile(file, execTime,fileName,"Pthreads", numRC, vector, matrix, solutions);
 
     // desalocar memoria usando o operador delete[]
     for (int i = 0; i < numRC; i++)
@@ -113,7 +122,7 @@ void forwardElimination(int numRC, double **matrix, double *vector)
             dataV[numRT].matrix = matrix;
             dataV[numRT].vector = vector;
             dataV[numRT].numRC = numRC;
-            dataV[numRT].multiplyFactor = matrix[k][k] / matrix[i][k];
+            dataV[numRT].multiplyFactor = matrix[i][k] / matrix[k][k];
             numRT++;
             countI++;
         }
@@ -134,7 +143,7 @@ void forwardElimination(int numRC, double **matrix, double *vector)
                 dataM[numCT][j].matrix = matrix;
                 dataM[numCT][j].vector = vector;
                 dataM[numCT][j].numRC = numRC;
-                dataM[numCT][j].multiplyFactor = matrix[k][k] / matrix[i][k];
+                dataM[numCT][j].multiplyFactor = matrix[i][k] / matrix[k][k];
             }
             countI++;
             numCT++;
@@ -170,6 +179,12 @@ void forwardElimination(int numRC, double **matrix, double *vector)
             }
         }
     }
+
+    for (int i = 0; i < numRC; i++)
+        delete[] dataM[i];
+
+    delete[] dataM;
+    delete[] dataV;
 }
 
 void *normalize(void *dataFormal)
@@ -180,7 +195,7 @@ void *normalize(void *dataFormal)
     int k = data->k;
 
     pthread_mutex_lock(&mutex);
-    data->vector[i] = data->vector[k] - data->multiplyFactor * data->vector[i];
+    data->vector[i] -= data->multiplyFactor * data->vector[k];
     pthread_mutex_unlock(&mutex);
 }
 
@@ -193,7 +208,7 @@ void *normalizeMatrix(void *dataFormal)
     int k = data->k;
 
     pthread_mutex_lock(&mutex);
-    data->matrix[i][j] = data->matrix[k][j] - data->multiplyFactor * data->matrix[i][j];
+    data->matrix[i][j] -= data->multiplyFactor * data->matrix[k][j];
     pthread_mutex_unlock(&mutex);
 }
 
