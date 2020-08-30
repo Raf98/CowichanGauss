@@ -3,73 +3,52 @@
 #include <stdlib.h>
 #include <time.h>
 #include <iomanip>
+#include <fstream>
+#include <list>
+
 #include <omp.h>
 
-void printInfos(int numRC, float **matrix, float *vector);
-void printResults(int numRC, float **matrix, float *vector, float *solutions);
-void forwardElimination(int numRC, float **matrix, float *vector);
-float *backwardSubstitution(int numRC, float **matrix, float *vector);
+#include "utils.hpp"
+
+void forwardElimination(int numRC, double **matrix, double *vector);
+double *backwardSubstitution(int numRC, double **matrix, double *vector);
+void readInputFile(std::fstream &file, int numRC, double *vector, double **matrix);
 
 int main(int argc, char const *argv[])
 {
-    int i, j, k, numRC;
-
-    float **matrix = new float *[numRC];
-    for (int i = 0; i < numRC; i++)
-        matrix[i] = new float[numRC];
-
-    float *vector = new float[numRC];
-
-    matrix[0][0] = 1;
-    matrix[0][1] = 3;
-    matrix[0][2] = 2;
-    matrix[0][3] = 2;
-    matrix[0][4] = 2;
-
-    matrix[1][0] = 9;
-    matrix[1][1] = 15;
-    matrix[1][2] = 5;
-    matrix[1][3] = 5;
-    matrix[1][4] = 5;
-
-    matrix[2][0] = 2;
-    matrix[2][1] = 0;
-    matrix[2][2] = 8;
-    matrix[2][3] = 8;
-    matrix[2][4] = 8;
-
-    matrix[3][0] = 2;
-    matrix[3][1] = 1;
-    matrix[3][2] = 9;
-    matrix[3][3] = 8;
-    matrix[3][4] = 7;
-
-    matrix[4][0] = 7;
-    matrix[4][1] = 0;
-    matrix[4][2] = 8;
-    matrix[4][3] = 56;
-    matrix[4][4] = 9;
-
-    numRC = 5;
-
-    int init[numRC] = {76, 40, 91, 67, 987};
-
-    for (i = 0; i < numRC; i++)
+    if (argc < 2)
     {
-        vector[i] = init[i]; //rand() % 128;
-        printf("%f\n", vector[i]);
+        std::cout << "ERROR! Program should be executed like this:" << std::endl;
+        std::cout << "./<executableName> <inputFileName>" << std::endl;
+        exit(1);
     }
 
-    printInfos(numRC, matrix, vector);
+    int i, j, k, numRC;
+
+    std::fstream file;
+
+    file.open(argv[1], std::fstream::in | std::fstream::out | std::fstream::app);
+
+    std::string line;
+
+    std::getline(file, line);
+    numRC = std::atoi(line.c_str());
+
+    double **matrix = new double *[numRC];
+    for (int i = 0; i < numRC; i++)
+        matrix[i] = new double[numRC];
+
+    double *vector = new double[numRC];
+
+    utils::readInputFile(file, numRC, vector, matrix);
+    utils::printInfos(numRC, matrix, vector, "\t\t****************INITIAL MATRIX*********************");
 
     //realiza o escalonamento reduzido da matriz; é a fase de eliminação
     forwardElimination(numRC, matrix, vector);
+    utils::printInfos(numRC, matrix, vector, "\t****************FORWARD ELIMINATION MATRIX*********************");
 
-    printInfos(numRC, matrix, vector);
-
-    float *solutions = backwardSubstitution(numRC, matrix, vector);
-
-    printResults(numRC, matrix, vector, solutions);
+    double *solutions = backwardSubstitution(numRC, matrix, vector);
+    utils::printResults(numRC, matrix, vector, solutions);
 
     // desalocar memoria usando o operador delete[]
     for (int i = 0; i < numRC; i++)
@@ -82,9 +61,9 @@ int main(int argc, char const *argv[])
     return 0;
 }
 
-void forwardElimination(int numRC, float **matrix, float *vector)
+void forwardElimination(int numRC, double **matrix, double *vector)
 {
-    float multiplyFactor = 0;
+    double multiplyFactor = 0;
 
     int i = 0, j = 0;
 
@@ -95,38 +74,32 @@ void forwardElimination(int numRC, float **matrix, float *vector)
         i = 0;
         j = 0;
 
-#pragma omp parallel for shared(matrix, vector) private(i) num_threads(numThreads)
-        //itera sobre as linhas da matriz restantes a serem normalizadas, para formar a diagonal de 0s
+#pragma omp parallel for shared(matrix, vector) private(i, multiplyFactor) schedule(static, 1) //num_threads(numThreads)
         for (i = k + 1; i < numRC; i++)
         {
-            if (matrix[i][k] == 0) //se a coluna for zero, a pula
-                continue;
 
-            //encontra o fator de multiplicação a ser utilizado de forma a zerar os valores das colunas
-            //que estejam na linha i ou abaixo. Usa o índice k pois esse é o indice da coluna e da linha
-            //anteriores que serão usados para realizar as operações de subtração e multiplicação necesarias
-            //para formar a diagonal inferior de 0s
-            multiplyFactor = matrix[k][k] / matrix[i][k];
+            //printf("\t%d\t", omp_get_num_threads());
 
-            //normaliza todas as colunas do vetor de resulatdos, da mesma forma que fará para as colunas da linha i
-            //da matriz
-            vector[i] = vector[k] - multiplyFactor * vector[i];
-
-//normaliza todas as colunas de indice i para 0 e realiza o mesmo calculo para as demais
-//colunas, não necessariamente as anulando
-#pragma omp parallel for shared(matrix) private(j) num_threads(numThreads)
-            for (j = k; j < numRC; j++)
+            if (matrix[i][k] != 0)
             {
-                matrix[i][j] = matrix[k][j] - multiplyFactor * matrix[i][j];
+                //#pragma omp critical
+                multiplyFactor = matrix[k][k] / matrix[i][k];
+                vector[i] = vector[k] - multiplyFactor * vector[i];
+
+#pragma omp parallel for shared(matrix) private(j) num_threads(numThreads)
+                for (j = k; j < numRC; j++)
+                {
+                    matrix[i][j] = matrix[k][j] - multiplyFactor * matrix[i][j];
+                }
             }
         }
     }
 }
 
-float *backwardSubstitution(int numRC, float **matrix, float *vector)
+double *backwardSubstitution(int numRC, double **matrix, double *vector)
 {
-    float *solutions = new float[numRC];
-    float sumMatrix = 0;
+    double *solutions = new double[numRC];
+    double sumMatrix = 0;
 
     //faz o cálculo das soluções do exercício
     for (int i = numRC - 1; i >= 0; i--)
@@ -147,32 +120,4 @@ float *backwardSubstitution(int numRC, float **matrix, float *vector)
     }
 
     return solutions;
-}
-
-void printResults(int numRC, float **matrix, float *vector, float *solutions)
-{
-    for (int i = 0; i < numRC; i++)
-    {
-        for (int j = 0; j < numRC; j++)
-        {
-            printf("%.2f ", matrix[i][j]);
-        }
-
-        printf(" | %.2f", vector[i]);
-        printf(" -> %.2f\n", solutions[i]);
-    }
-}
-
-void printInfos(int numRC, float **matrix, float *vector)
-{
-
-    for (int i = 0; i < numRC; i++)
-    {
-        for (int j = 0; j < numRC; j++)
-        {
-            printf("%.2f ", matrix[i][j]);
-        }
-
-        printf(" | %.2f\n", vector[i]);
-    }
 }

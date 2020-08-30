@@ -3,91 +3,46 @@
 #include <stdlib.h>
 #include <time.h>
 #include <iomanip>
+#include "utils.hpp"
 
-void printInfos(int numRC, float **matrix, float *vector);
-void printResults(int numRC, float **matrix, float *vector, float* solutions);
-void forwardElimination(int numRC, float **matrix, float *vector);
-float *backwardSubstitution(int numRC, float **matrix, float *vector);
+void forwardElimination(int numRC, double **matrix, double *vector);
+double *backwardSubstitution(int numRC, double **matrix, double *vector);
 
 int main(int argc, char const *argv[])
 {
+    if (argc < 2)
+    {
+        std::cout << "ERROR! Program should be executed like this:" << std::endl;
+        std::cout << "./<executableName> <inputFileName>" << std::endl;
+        exit(1);
+    }
+
     int i, j, k, numRC;
 
-    //read number of rows and columns
-    numRC = 5;
+    std::fstream file;
 
-    srand(time(NULL));
+    file.open(argv[1], std::fstream::in | std::fstream::out | std::fstream::app);
 
-    float **matrix = new float *[numRC];
+    std::string line;
+
+    std::getline(file, line);
+    numRC = std::atoi(line.c_str());
+
+    double **matrix = new double *[numRC];
     for (int i = 0; i < numRC; i++)
-        matrix[i] = new float[numRC];
+        matrix[i] = new double[numRC];
 
-    float *vector = new float[numRC];
+    double *vector = new double[numRC];
 
-    matrix[0][0] = 1;
-    matrix[0][1] = 3;
-    matrix[0][2] = 2;
-    matrix[0][3] = 2;
-    matrix[0][4] = 2;
-
-    matrix[1][0] = 9;
-    matrix[1][1] = 15;
-    matrix[1][2] = 5;
-    matrix[1][3] = 5;
-    matrix[1][4] = 5;
-
-    matrix[2][0] = 2;
-    matrix[2][1] = 0;
-    matrix[2][2] = 8;
-    matrix[2][3] = 8;
-    matrix[2][4] = 8;
-
-    matrix[3][0] = 2;
-    matrix[3][1] = 1;
-    matrix[3][2] = 9;
-    matrix[3][3] = 8;
-    matrix[3][4] = 7;
-
-    matrix[4][0] = 7;
-    matrix[4][1] = 0;
-    matrix[4][2] = 8;
-    matrix[4][3] = 56;
-    matrix[4][4] = 9;
-
-    /*
-    float matrix[numRC][numRC] = {{1, 3, 2},
-                                  {9, 15, 5},
-                                  {2, 0, 8}};
-    */
-
-    /* 		
-    //matriz deve ser diagonal dominante e simetrica
-    for (i = 0; i < numCols; i++)
-    {
-        for (j = 0; j < numCols; j++)
-        {
-            matrix[i][j] = rand % 128;
-        }
-    }
-    */
-    int init[5] = {76, 40, 91, 67, 987};
-
-    for (i = 0; i < numRC; i++)
-    {
-        vector[i] = init[i]; //rand() % 128;
-        printf("%f\n", vector[i]);
-    }
-
-    printInfos(numRC, matrix, vector);
+    utils::readInputFile(file, numRC, vector, matrix);
+    utils::printInfos(numRC, matrix, vector, "\t\t****************INITIAL MATRIX*********************");
 
     //realiza o escalonamento reduzido da matriz; é a fase de eliminação
     forwardElimination(numRC, matrix, vector);
+    utils::printInfos(numRC, matrix, vector, "\t****************FORWARD ELIMINATION MATRIX*********************");
 
-    printInfos(numRC, matrix, vector);
-
-    float *solutions = backwardSubstitution(numRC, matrix, vector);
-
-    printResults(numRC, matrix, vector, solutions);
+    double *solutions = backwardSubstitution(numRC, matrix, vector);
+    utils::printResults(numRC, matrix, vector, solutions);
 
     // desalocar memoria usando o operador delete[]
     for (int i = 0; i < numRC; i++)
@@ -100,9 +55,9 @@ int main(int argc, char const *argv[])
     return 0;
 }
 
-void forwardElimination(int numRC, float **matrix, float *vector)
+void forwardElimination(int numRC, double **matrix, double *vector)
 {
-    float multiplyFactor = 0;
+    double multiplyFactor = 0;
 
     for (int k = 0; k < numRC-1; k++)
     {
@@ -131,10 +86,10 @@ void forwardElimination(int numRC, float **matrix, float *vector)
     }
 }
 
-float *backwardSubstitution(int numRC, float **matrix, float *vector)
+double *backwardSubstitution(int numRC, double **matrix, double *vector)
 {
-    float *solutions = new float[numRC];
-    float sumMatrix = 0;
+    double *solutions = new double[numRC];
+    double sumMatrix = 0;
 
     //faz o cálculo das soluções do exercício
     for (int i = numRC - 1; i >= 0; i--)
@@ -155,32 +110,4 @@ float *backwardSubstitution(int numRC, float **matrix, float *vector)
     }
 
     return solutions;
-}
-
-void printResults(int numRC, float **matrix, float *vector, float *solutions)
-{
-    for (int i = 0; i < numRC; i++)
-    {
-        for (int j = 0; j < numRC; j++)
-        {
-            printf("%.2f ", matrix[i][j]);
-        }
-
-        printf(" | %.2f", vector[i]);
-        printf(" -> %.2f\n", solutions[i]);
-    }
-}
-
-void printInfos(int numRC, float **matrix, float *vector)
-{
-
-    for (int i = 0; i < numRC; i++)
-    {
-        for (int j = 0; j < numRC; j++)
-        {
-            printf("%.2f ", matrix[i][j]);
-        }
-
-        printf(" | %.2f\n", vector[i]);
-    }
 }
