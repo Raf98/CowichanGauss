@@ -44,38 +44,41 @@ int main(int argc, char const *argv[])
     std::fstream file;
     std::string fileName = argv[1];
 
-    file.open(fileName, std::fstream::in | std::fstream::out | std::fstream::app);
+    double **matrix;
+    double *vector;
+    double *solutions;
 
-    std::string line;
+    for (int index = 0; index < 30; index++)
+    {
+        file.open(fileName, std::fstream::in | std::fstream::out | std::fstream::app);
 
-    std::getline(file, line);
-    numRC = std::atoi(line.c_str());
+        std::string line;
 
-    double **matrix = new double *[numRC];
-    for (int i = 0; i < numRC; i++)
-        matrix[i] = new double[numRC];
+        std::getline(file, line);
+        numRC = std::atoi(line.c_str());
 
-    double *vector = new double[numRC];
+        matrix = new double *[numRC];
+        for (int i = 0; i < numRC; i++)
+            matrix[i] = new double[numRC];
 
-    utils::readInputFile(file, numRC, vector, matrix);
-    utils::printInfos(numRC, matrix, vector, "\t\t****************INITIAL MATRIX*********************");
+        vector = new double[numRC];
 
-    pthread_mutex_init(&mutex, NULL);
+        utils::readInputFile(file, numRC, vector, matrix);
+        utils::printInfos(numRC, matrix, vector, "\t\t****************INITIAL MATRIX*********************");
 
-    auto start = std::chrono::high_resolution_clock::now();
+        auto start = std::chrono::high_resolution_clock::now();
 
-    //realiza o escalonamento reduzido da matriz; é a fase de eliminação
-    forwardElimination(numRC, matrix, vector);
-    //utils::printInfos(numRC, matrix, vector, "\t****************FORWARD ELIMINATION MATRIX*********************");
-    double *solutions = backwardSubstitution(numRC, matrix, vector);
+        forwardElimination(numRC, matrix, vector);
+        solutions = backwardSubstitution(numRC, matrix, vector);
 
-    auto end = std::chrono::high_resolution_clock::now();
-    auto execTime = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start);
+        auto end = std::chrono::high_resolution_clock::now();
+        auto execTime = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start);
 
-    utils::printResults(numRC, matrix, vector, solutions);
+        utils::printResults(numRC, matrix, vector, solutions);
 
-    std::cout << "Execution Time: " << execTime.count() << std::endl;
-    utils::writeOutputFile(file, execTime,fileName,"Pthreads", numRC, vector, matrix, solutions);
+        std::cout << "Execution Time: " << execTime.count() << std::endl;
+        utils::writeOutputFile(file, execTime, fileName, "Pthreads", index, numRC, vector, matrix, solutions);
+    }
 
     // desalocar memoria usando o operador delete[]
     for (int i = 0; i < numRC; i++)

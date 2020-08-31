@@ -22,36 +22,41 @@ int main(int argc, char const *argv[])
     std::fstream file;
     std::string fileName = argv[1];
 
-    file.open(fileName, std::fstream::in | std::fstream::out | std::fstream::app);
+    double **matrix;
+    double *vector;
+    double *solutions;
 
-    std::string line;
+    for (int index = 0; index < 30; index++)
+    {
+        file.open(fileName, std::fstream::in | std::fstream::out | std::fstream::app);
 
-    std::getline(file, line);
-    numRC = std::atoi(line.c_str());
+        std::string line;
 
-    double **matrix = new double *[numRC];
-    for (int i = 0; i < numRC; i++)
-        matrix[i] = new double[numRC];
+        std::getline(file, line);
+        numRC = std::atoi(line.c_str());
 
-    double *vector = new double[numRC];
+        matrix = new double *[numRC];
+        for (int i = 0; i < numRC; i++)
+            matrix[i] = new double[numRC];
 
-    utils::readInputFile(file, numRC, vector, matrix);
-    utils::printInfos(numRC, matrix, vector, "\t\t****************INITIAL MATRIX*********************");
+        vector = new double[numRC];
 
-    auto start = std::chrono::high_resolution_clock::now();
+        utils::readInputFile(file, numRC, vector, matrix);
+        utils::printInfos(numRC, matrix, vector, "\t\t****************INITIAL MATRIX*********************");
 
-    //realiza o escalonamento reduzido da matriz; é a fase de eliminação
-    forwardElimination(numRC, matrix, vector);
-    //utils::printInfos(numRC, matrix, vector, "\t****************FORWARD ELIMINATION MATRIX*********************");
-    double *solutions = backwardSubstitution(numRC, matrix, vector);
+        auto start = std::chrono::high_resolution_clock::now();
 
-    auto end = std::chrono::high_resolution_clock::now();
-    auto execTime = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start);
+        forwardElimination(numRC, matrix, vector);
+        solutions = backwardSubstitution(numRC, matrix, vector);
 
-    utils::printResults(numRC, matrix, vector, solutions);
+        auto end = std::chrono::high_resolution_clock::now();
+        auto execTime = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start);
 
-    std::cout << "Execution Time: " << execTime.count() << std::endl;
-    utils::writeOutputFile(file, execTime, fileName, "Seq", numRC, vector, matrix, solutions);
+        utils::printResults(numRC, matrix, vector, solutions);
+
+        std::cout << "Execution Time: " << execTime.count() << std::endl;
+        utils::writeOutputFile(file, execTime, fileName, "Seq", index, numRC, vector, matrix, solutions);
+    }
 
     // desalocar memoria usando o operador delete[]
     for (int i = 0; i < numRC; i++)
@@ -76,7 +81,7 @@ void forwardElimination(int numRC, double **matrix, double *vector)
             if (matrix[i][k] == 0) //se a coluna for zero, a pula
                 continue;
 
-                //a[1][0] = a[1][0] - (a[1][0]/a[0][0])*(a[0][0])
+            //a[1][0] = a[1][0] - (a[1][0]/a[0][0])*(a[0][0])
 
             //encontra o fator de multiplicação a ser utilizado de forma a zerar os valores das colunas
             //que estejam na linha i ou abaixo. Usa o índice k pois esse é o indice da coluna e da linha

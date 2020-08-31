@@ -65,6 +65,19 @@ seq3:
 exseq3:
 	./gaussian test3
 
+execAllTests:
+				$(MAKE) seq1
+				$(MAKE) seq2
+				$(MAKE) seq3
+				$(MAKE) pthreads1
+				$(MAKE) pthreads2
+				$(MAKE) pthreads3
+				$(MAKE) openmp1
+				$(MAKE) openmp2
+				$(MAKE) openmp3
+
+clean:
+		rm output*
 
 
 

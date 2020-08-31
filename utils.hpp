@@ -124,16 +124,19 @@ namespace utils
     }
 
     void writeOutputFile(std::fstream &file, std::chrono::_V2::high_resolution_clock::duration execTime,
-                         std::string inputFileName, std::string trialType, int numRC, double *vector,
+                         std::string inputFileName, std::string trialType, int index, int numRC, double *vector,
                          double **matrix, double *solutions)
     {
         std::string outputFileName = "output_" + trialType + "_" + std::to_string(numRC) + "_" + inputFileName;
 
         file.open(outputFileName, std::fstream::in | std::fstream::out | std::fstream::app);
 
-        file << "Execution time: " << execTime.count() << " ns"
-             << "\n\n";
+        //file << "Execution time" + std::to_string(index) + ": " << execTime.count() << " ns"
+        //     << "\n\n";
 
+        file << execTime.count() << ", ";
+
+        /*
         for (int i = 0; i < numRC; i++)
         {
             for (int j = 0; j < numRC; j++)
@@ -146,6 +149,24 @@ namespace utils
         }
 
         file << "\n\n\n";
+        */
+
+        file.close();
+    }
+
+    void writeOutputFile(std::fstream &file, double execTime,
+                         std::string inputFileName, std::string trialType, int index, int numRC, double *vector,
+                         double **matrix, double *solutions)
+    {
+        std::string outputFileName = "output_" + trialType + "_" + std::to_string(numRC) + "_" + inputFileName;
+
+        file.open(outputFileName, std::fstream::in | std::fstream::out | std::fstream::app);
+
+        //file << "Execution time " + std::to_string(index) + ": " << execTime << " ns"
+        //     << "\n\n";
+
+        file << execTime << ", ";
+        
 
         file.close();
     }
