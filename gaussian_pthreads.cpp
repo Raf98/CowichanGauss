@@ -48,7 +48,7 @@ int main(int argc, char const *argv[])
     double *vector;
     double *solutions;
 
-    for (int index = 0; index < 30; index++)
+    for (int index = 0; index < 100; index++)
     {
         file.open(fileName, std::fstream::in | std::fstream::out | std::fstream::app);
 

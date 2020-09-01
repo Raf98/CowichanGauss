@@ -32,7 +32,7 @@ int main(int argc, char const *argv[])
     double *vector;
     double *solutions;
 
-    for (int index = 0; index < 30; index++)
+    for (int index = 0; index < 100; index++)
     {
         file.open(fileName, std::fstream::in | std::fstream::out | std::fstream::app);
 
@@ -92,7 +92,7 @@ void forwardElimination(int numRC, double **matrix, double *vector)
         i = 0;
         j = 0;
 
-#pragma omp parallel for shared(matrix, vector) private(i, multiplyFactor) schedule(static) //num_threads(numThreads)
+#pragma omp parallel for shared(matrix, vector) private(i, j, multiplyFactor) schedule(static, 1) //num_threads(numThreads)
         for (i = k + 1; i < numRC; i++)
         {
 
@@ -104,7 +104,7 @@ void forwardElimination(int numRC, double **matrix, double *vector)
                 multiplyFactor = matrix[i][k] / matrix[k][k];
                 vector[i] -= multiplyFactor * vector[k];
 
-#pragma omp parallel for shared(matrix) private(j) schedule(static) //num_threads(numThreads)
+//#pragma omp parallel for shared(matrix) private(j) schedule(static, 1) //num_threads(numThreads)
                 for (j = k; j < numRC; j++)
                 {
                     matrix[i][j] -= multiplyFactor * matrix[k][j];
