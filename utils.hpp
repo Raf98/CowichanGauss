@@ -15,7 +15,7 @@ namespace utils
         std::list<std::string> strList;
         std::string aux;
 
-        std::cout << str << std::endl;
+        //std::cout << str << std::endl;
 
         for (int i = 0; i < str.size(); i++)
         {
@@ -86,15 +86,15 @@ namespace utils
 
     void readInputFile(std::fstream &file, int numRC, double *vector, double **matrix)
     {
-
+        /*
         std::cout << "\t*****************INITIALIZING MATRIX AND VECTOR*********************"
                   << "\n\n";
 
         std::cout << "NUMBER OF ROWS AND COLUMNS: " << numRC << "\n\n";
-
+        */
         std::string line;
 
-        std::cout << "MATRIX:" << std::endl;
+        //std::cout << "MATRIX:" << std::endl;
 
         for (int i = 0; i < numRC; i++)
         {
@@ -107,18 +107,18 @@ namespace utils
                 strNumbers.pop_front();
             }
 
-            std::cout << std::endl;
+            //std::cout << std::endl;
         }
 
-        std::cout << "VECTOR:" << std::endl;
+        //std::cout << "VECTOR:" << std::endl;
 
         for (int i = 0; i < numRC; i++)
         {
             std::getline(file, line);
             vector[i] = std::atof(line.c_str());
-            std::cout << vector[i] << "\t";
+            //std::cout << vector[i] << "\t";
         }
-        std::cout << std::endl;
+        //std::cout << std::endl;
 
         file.close();
     }

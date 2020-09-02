@@ -5,8 +5,10 @@ from matplotlib import pyplot as plt
 import math
 import os
 
-# plt.plot([0,1,2,3,4])
-# plt.show()
+class SimulationData:
+  def __init__(self, results, numRC):
+    self.results = results
+    self.numRC = numRC
 
 files = []
 
@@ -21,6 +23,9 @@ files.append(open("output_Pthreads_10_test3", "r"))
 files.append(open("output_OpenMP_3_test1", "r"))
 files.append(open("output_OpenMP_5_test2", "r"))
 files.append(open("output_OpenMP_10_test3", "r"))
+
+openmp = []
+pthreads = []
 
 for file in files:
     strArray = []
@@ -53,6 +58,38 @@ for file in files:
     print(plotTitle)
     x = np.array(results)
     print('KS-statistic D = %6.3f pvalue = %6.4f' % kstest(x, 'norm'))
+
+    if("OpenMP" in fileName):
+        sd = SimulationData(results, int(fileName.split("_")[2]))
+        openmp.append(sd)
+    if("Pthreads" in fileName):
+        sd = SimulationData(results, int(fileName.split("_")[2]))
+        pthreads.append(sd)
     #print('KS-statistic D = %6.3f pvalue = %6.4f' % kstest(x, 't'))
 
+count = 0
+
+#plt.cla()
+#plt.clf()
+
+while(count < 3):
+    figure = plt.figure()
+    plt.plot(openmp[count].results, label = "OpenMP")
+    plt.plot(pthreads[count].results, label = "Pthreads")
+    plt.legend()
+    plt.xlabel("Sample")
+    plt.ylabel("Execution time(ns)")
+
+    plotTitle = "OpenMP and Pthreads Comparison - " + str(openmp[count].numRC) + " rows and columns"
+    plt.title(plotTitle) 
+    #plt.hist(openmp[count].results)
+    #plt.hist(pthreads[count].results)
+
+    figuresDir = "Figures"
+    if not os.path.exists(figuresDir):
+        os.makedirs(figuresDir)
+    figure.savefig(figuresDir + "/" + "OpenMP_Pthreads_" + str(openmp[count].numRC) + "_Fig")
+    plt.show()
+
+    count += 1
 

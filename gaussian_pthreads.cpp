@@ -64,7 +64,7 @@ int main(int argc, char const *argv[])
         vector = new double[numRC];
 
         utils::readInputFile(file, numRC, vector, matrix);
-        utils::printInfos(numRC, matrix, vector, "\t\t****************INITIAL MATRIX*********************");
+        //utils::printInfos(numRC, matrix, vector, "\t\t****************INITIAL MATRIX*********************");
 
         auto start = std::chrono::high_resolution_clock::now();
 
@@ -74,9 +74,9 @@ int main(int argc, char const *argv[])
         auto end = std::chrono::high_resolution_clock::now();
         auto execTime = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start);
 
-        utils::printResults(numRC, matrix, vector, solutions);
+        //utils::printResults(numRC, matrix, vector, solutions);
 
-        std::cout << "Execution Time: " << execTime.count() << std::endl;
+        //std::cout << "Execution Time: " << execTime.count() << std::endl;
         utils::writeOutputFile(file, execTime, fileName, "Pthreads", index, numRC, vector, matrix, solutions);
     }
 
@@ -96,16 +96,12 @@ void forwardElimination(int numRC, double **matrix, double *vector)
     double multiplyFactor = 0;
 
     Data *dataV = new Data[numRC];
-    Data **dataM = new Data *[numRC];
-    for (int i = 0; i < numRC; i++)
-        dataM[i] = new Data[numRC];
 
     int numRT;
     int numCT;
     int numRCT;
     int countI = 0;
 
-    //NÃO-PARALELIZAVEL
     for (int k = 0; k < numRC - 1; k++)
     {
         numRT = 0;
@@ -130,30 +126,7 @@ void forwardElimination(int numRC, double **matrix, double *vector)
             countI++;
         }
 
-        countI = k + 1;
-        for (int i = k + 1; i < numRC; i++)
-        {
-            if (matrix[i][k] == 0)
-            {
-                countI++;
-                continue;
-            }
-            for (int j = k; j < numRC; j++)
-            {
-                dataM[numCT][j].i = countI;
-                dataM[numCT][j].j = j;
-                dataM[numCT][j].k = k;
-                dataM[numCT][j].matrix = matrix;
-                dataM[numCT][j].vector = vector;
-                dataM[numCT][j].numRC = numRC;
-                dataM[numCT][j].multiplyFactor = matrix[i][k] / matrix[k][k];
-            }
-            countI++;
-            numCT++;
-        }
-
         pthread_t rowsThreads[numRT];
-        pthread_t columnsThreads[numCT];
 
         for (int i = 0; i < numRT; i++)
         {
@@ -166,27 +139,8 @@ void forwardElimination(int numRC, double **matrix, double *vector)
             pthread_join(rowsThreads[i], NULL);
             //std::cout << "Synchronizing row thread " << i << "\n\n";
         }
-
-        for (int i = 0; i < numCT; i++)
-        {
-            for (int j = k; j < numRC; j++)
-            {
-                pthread_create(&(columnsThreads[j]), NULL, normalizeMatrix, (void *)&dataM[i][j]);
-                //std::cout << "Created column thread " << i << " " << j << std::endl;
-            }
-
-            for (int j = k; j < numRC; j++)
-            {
-                pthread_join(columnsThreads[j], NULL);
-                //std::cout << "Synchronizing column thread " << j << "\n\n";
-            }
-        }
     }
 
-    for (int i = 0; i < numRC; i++)
-        delete[] dataM[i];
-
-    delete[] dataM;
     delete[] dataV;
 }
 
@@ -200,6 +154,14 @@ void *normalize(void *dataFormal)
     pthread_mutex_lock(&mutex);
     data->vector[i] -= data->multiplyFactor * data->vector[k];
     pthread_mutex_unlock(&mutex);
+
+    //novo trecho - teste
+    for (j = k; j < data->numRC; j++)
+    {
+        pthread_mutex_lock(&mutex);
+        data->matrix[i][j] -= data->multiplyFactor * data->matrix[k][j];
+        pthread_mutex_unlock(&mutex);
+    }
 }
 
 void *normalizeMatrix(void *dataFormal)

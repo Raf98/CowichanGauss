@@ -42,7 +42,7 @@ int main(int argc, char const *argv[])
         vector = new double[numRC];
 
         utils::readInputFile(file, numRC, vector, matrix);
-        utils::printInfos(numRC, matrix, vector, "\t\t****************INITIAL MATRIX*********************");
+        //utils::printInfos(numRC, matrix, vector, "\t\t****************INITIAL MATRIX*********************");
 
         auto start = std::chrono::high_resolution_clock::now();
 
@@ -52,9 +52,9 @@ int main(int argc, char const *argv[])
         auto end = std::chrono::high_resolution_clock::now();
         auto execTime = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start);
 
-        utils::printResults(numRC, matrix, vector, solutions);
+        //utils::printResults(numRC, matrix, vector, solutions);
 
-        std::cout << "Execution Time: " << execTime.count() << std::endl;
+        //std::cout << "Execution Time: " << execTime.count() << std::endl;
         utils::writeOutputFile(file, execTime, fileName, "Seq", index, numRC, vector, matrix, solutions);
     }
 

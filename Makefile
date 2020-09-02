@@ -66,15 +66,18 @@ exseq3:
 	./gaussian test3
 
 execAllTests:
-				$(MAKE) seq1
-				$(MAKE) seq2
-				$(MAKE) seq3
-				$(MAKE) pthreads1
-				$(MAKE) pthreads2
-				$(MAKE) pthreads3
-				$(MAKE) openmp1
-				$(MAKE) openmp2
-				$(MAKE) openmp3
+				g++ gaussian.cpp utils.hpp -o gaussian
+				g++ gaussian_pthreads.cpp utils.hpp -o gaussianPthreads -lpthread
+				g++ -fopenmp gaussian_openMP.cpp utils.hpp -o gaussianOMP -lpthread
+				$(MAKE) exseq1
+				$(MAKE) exseq2
+				$(MAKE) exseq3
+				$(MAKE) expthreads1
+				$(MAKE) expthreads2
+				$(MAKE) expthreads3
+				$(MAKE) exopenmp1
+				$(MAKE) exopenmp2
+				$(MAKE) exopenmp3
 
 clean:
 		rm output*

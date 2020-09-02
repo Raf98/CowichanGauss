@@ -48,7 +48,7 @@ int main(int argc, char const *argv[])
         vector = new double[numRC];
 
         utils::readInputFile(file, numRC, vector, matrix);
-        utils::printInfos(numRC, matrix, vector, "\t\t****************INITIAL MATRIX*********************");
+        //utils::printInfos(numRC, matrix, vector, "\t\t****************INITIAL MATRIX*********************");
 
         //double start = omp_get_wtime();
         auto start = std::chrono::high_resolution_clock::now();
@@ -62,10 +62,10 @@ int main(int argc, char const *argv[])
         auto end = std::chrono::high_resolution_clock::now();
         auto execTime = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start);
 
-        utils::printResults(numRC, matrix, vector, solutions);
+        //utils::printResults(numRC, matrix, vector, solutions);
 
         //std::cout << "Execution Time: " << execTime << std::endl;
-        std::cout << "Execution Time: " << execTime.count() << std::endl;
+        //std::cout << "Execution Time: " << execTime.count() << std::endl;
         utils::writeOutputFile(file, execTime, fileName, "OpenMP", index, numRC, vector, matrix, solutions);
     }
 
@@ -92,7 +92,7 @@ void forwardElimination(int numRC, double **matrix, double *vector)
         i = 0;
         j = 0;
 
-#pragma omp parallel for shared(matrix, vector) private(i, j, multiplyFactor) schedule(static, 1) //num_threads(numThreads)
+#pragma omp parallel for shared(matrix, vector) private(i, multiplyFactor) schedule(static, 1) num_threads(numThreads)
         for (i = k + 1; i < numRC; i++)
         {
 
@@ -105,7 +105,7 @@ void forwardElimination(int numRC, double **matrix, double *vector)
                 vector[i] -= multiplyFactor * vector[k];
 
 //#pragma omp parallel for shared(matrix) private(j) schedule(static, 1) //num_threads(numThreads)
-                for (j = k; j < numRC; j++)
+                for (int j = k; j < numRC; j++)
                 {
                     matrix[i][j] -= multiplyFactor * matrix[k][j];
                 }
