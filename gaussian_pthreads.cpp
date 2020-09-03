@@ -98,15 +98,11 @@ void forwardElimination(int numRC, double **matrix, double *vector)
     Data *dataV = new Data[numRC];
 
     int numRT;
-    int numCT;
-    int numRCT;
     int countI = 0;
 
     for (int k = 0; k < numRC - 1; k++)
     {
         numRT = 0;
-        numCT = 0;
-        numRCT = 0;
 
         countI = k + 1;
         for (int i = k + 1; i < numRC; i++)

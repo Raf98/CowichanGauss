@@ -85,7 +85,7 @@ void forwardElimination(int numRC, double **matrix, double *vector)
 
     int i = 0, j = 0;
 
-    int numThreads = 4;
+    int numThreads = numRC;
 
     for (int k = 0; k < numRC - 1; k++)
     {
