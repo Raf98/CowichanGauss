@@ -82,7 +82,8 @@ execAllTests:
 clean:
 		rm output*
 
-
+pythonScript:
+		python3 kolmogorov.py
 
 
 

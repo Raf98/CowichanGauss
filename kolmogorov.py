@@ -141,6 +141,7 @@ plt.show()
 
 
 detailsFile = open("benchmarkDetailsFile", "w")
+detailsFile.write("Tool - Test; Mean; Median; Variance; Standard Deviation; KS-Statistic D; pvalue\n")
 
 for bd in benchmarkData:
     bd.calcMean()
@@ -154,9 +155,9 @@ for bd in benchmarkData:
     bd.pvalue = KSValues[1]
     print('KS-statistic D = %f pvalue = %f', bd.KSStatisticD, bd.pvalue)
 
-    fileStr = bd.label + "-" + str(bd.numRC).replace('.',',') + ": Mean: " + str(bd.mean).replace('.',',') + "; Median: " + str(bd.median).replace('.',',') + \
-            "; Variance: " + str(bd.variance).replace('.',',') + "; Standard Deviation: " + str(bd.stdDeviation).replace('.',',') + \
-                "; KS-Statistic D: " + str(bd.KSStatisticD).replace('.',',') + "; pvalue: " + str(bd.pvalue).replace('.',',') +"\n"
+    fileStr = bd.label + "-" + str(bd.numRC).replace('.',',') + "; " + str(bd.mean).replace('.',',') + "; " + str(bd.median).replace('.',',') + \
+            "; " + str(bd.variance).replace('.',',') + "; " + str(bd.stdDeviation).replace('.',',') + \
+                "; " + str(bd.KSStatisticD).replace('.',',') + "; " + str(bd.pvalue).replace('.',',') +"\n"
     detailsFile.write(fileStr)
 
 detailsFile.close()
