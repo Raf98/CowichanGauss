@@ -64,7 +64,7 @@ for file in files:
     strArray = file.read().split(",")
     strArray.pop()
 
-    results = [int(i) for i in strArray]
+    results = [float(i) for i in strArray]
     # print(results)
 
     figure = plt.figure()

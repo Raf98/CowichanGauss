@@ -154,6 +154,25 @@ namespace utils
         file.close();
     }
 
+    void writeOutputFile(std::fstream &file, double *execTimeVector,
+                         std::string inputFileName, std::string trialType, int numRC, int vectorSize)
+    {
+        std::string outputFileName = "output_" + trialType + "_" + std::to_string(numRC) + "_" + inputFileName;
+
+        file.open(outputFileName, std::fstream::in | std::fstream::out | std::fstream::app);
+
+        //std::cout << outputFileName << std::endl;
+
+        for (int i = 0; i < vectorSize; i++)
+        {
+            file << execTimeVector[i] << ", ";
+           // std::cout << "Execution time " + std::to_string(i) + ": " << execTimeVector[i] << " ns"
+           //       << "\n\n";
+        }
+
+        file.close();
+    }
+
     void writeOutputFile(std::fstream &file, double execTime,
                          std::string inputFileName, std::string trialType, int index, int numRC, double *vector,
                          double **matrix, double *solutions)
@@ -162,11 +181,12 @@ namespace utils
 
         file.open(outputFileName, std::fstream::in | std::fstream::out | std::fstream::app);
 
-        //file << "Execution time " + std::to_string(index) + ": " << execTime << " ns"
-        //     << "\n\n";
+        std::cout << outputFileName << std::endl;
+
+        std::cout << "Execution time " + std::to_string(index) + ": " << execTime << " ns"
+                  << "\n\n";
 
         file << execTime << ", ";
-        
 
         file.close();
     }

@@ -32,22 +32,45 @@ int main(int argc, char const *argv[])
     double *vector;
     double *solutions;
 
-    for (int index = 0; index < 100; index++)
+    double **matrixOriginal;
+    double *vectorOriginal;
+
+    file.open(fileName, std::fstream::in | std::fstream::out | std::fstream::app);
+
+    std::string line;
+
+    std::getline(file, line);
+    numRC = std::atoi(line.c_str());
+
+    matrixOriginal = new double *[numRC];
+    for (int i = 0; i < numRC; i++)
+        matrixOriginal[i] = new double[numRC];
+
+    vectorOriginal = new double[numRC];
+
+    utils::readInputFile(file, numRC, vectorOriginal, matrixOriginal);
+
+    matrix = new double *[numRC];
+    for (int i = 0; i < numRC; i++)
+        matrix[i] = new double[numRC];
+
+    vector = new double[numRC];
+
+    const int NUM_TESTS = 100;
+
+    double *execTimeVector = new double[NUM_TESTS];
+
+    for (int index = 0; index < NUM_TESTS; index++)
     {
-        file.open(fileName, std::fstream::in | std::fstream::out | std::fstream::app);
-
-        std::string line;
-
-        std::getline(file, line);
-        numRC = std::atoi(line.c_str());
-
-        matrix = new double *[numRC];
         for (int i = 0; i < numRC; i++)
-            matrix[i] = new double[numRC];
+        {
+            for (int j = 0; j < numRC; j++)
+            {
+                matrix[i][j] = matrixOriginal[i][j];
+            }
+            vector[i] = vectorOriginal[i];
+        }
 
-        vector = new double[numRC];
-
-        utils::readInputFile(file, numRC, vector, matrix);
         //utils::printInfos(numRC, matrix, vector, "\t\t****************INITIAL MATRIX*********************");
 
         //double start = omp_get_wtime();
@@ -62,12 +85,16 @@ int main(int argc, char const *argv[])
         auto end = std::chrono::high_resolution_clock::now();
         auto execTime = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start);
 
+        execTimeVector[index] = execTime.count();
+
         //utils::printResults(numRC, matrix, vector, solutions);
 
         //std::cout << "Execution Time: " << execTime << std::endl;
         //std::cout << "Execution Time: " << execTime.count() << std::endl;
-        utils::writeOutputFile(file, execTime, fileName, "OpenMP", index, numRC, vector, matrix, solutions);
+        //utils::writeOutputFile(file, execTime, fileName, "Pthreads", index, numRC, vector, matrix, solutions);
     }
+
+    utils::writeOutputFile(file, execTimeVector, fileName, "OpenMP", numRC, NUM_TESTS);
 
     for (int i = 0; i < numRC; i++)
         delete[] matrix[i];
@@ -75,6 +102,8 @@ int main(int argc, char const *argv[])
     delete[] matrix;
     delete[] vector;
     delete[] solutions;
+
+    delete[] execTimeVector;
 
     return 0;
 }
@@ -104,7 +133,7 @@ void forwardElimination(int numRC, double **matrix, double *vector)
                 multiplyFactor = matrix[i][k] / matrix[k][k];
                 vector[i] -= multiplyFactor * vector[k];
 
-//#pragma omp parallel for shared(matrix) private(j) schedule(static, 1) //num_threads(numThreads)
+                //#pragma omp parallel for shared(matrix) private(j) schedule(static, 1) //num_threads(numThreads)
                 for (int j = k; j < numRC; j++)
                 {
                     matrix[i][j] -= multiplyFactor * matrix[k][j];
