@@ -98,6 +98,8 @@ void forwardElimination(int numRC, double **matrix, double *vector)
 
             //realiza a mesma operação para o vetor de resultados
             vector[i] = vector[i] - multiplyFactor * vector[k];
+
+            //utils::printInfos(numRC, matrix, vector, "PARTIAL MATRIX");
         }
     }
 }
